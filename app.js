@@ -563,6 +563,63 @@ class MahjongApp {
             this.selectedWinningTileSpan.textContent = '未選択';
         }
     }
+
+    showConditionModal(conditionType) {
+        const modal = document.getElementById('conditionModal');
+        const title = document.getElementById('modalTitle');
+        const description = document.getElementById('modalDescription');
+        const details = document.getElementById('modalDetails');
+        
+        const conditionInfo = {
+            'riichi': {
+                title: 'リーチ',
+                description: '聴牌時に宣言する1翻役です。',
+                details: '手牌を公開せずに、あと1枚で和了できる状態で宣言します。リーチ後は手牌を変更できません。'
+            },
+            'doubleRiichi': {
+                title: 'ダブルリーチ',
+                description: '配牌時に既に聴牌している場合の2翻役です。',
+                details: '第一ツモ前に聴牌していて、第一打でリーチをかけた場合に成立します。'
+            },
+            'ippatsu': {
+                title: '一発',
+                description: 'リーチ宣言後1巡以内に和了する1翻役です。',
+                details: 'リーチをかけた後、他家が鳴きを入れずに1巡以内に和了した場合に成立します。'
+            },
+            'haitei': {
+                title: '海底撈月',
+                description: '海底牌でツモ和了する1翻役です。',
+                details: '王牌を除いた最後の牌でツモ和了した場合に成立します。'
+            },
+            'houtei': {
+                title: '河底撈魚',
+                description: '海底牌の捨て牌でロン和了する1翻役です。',
+                details: '王牌を除いた最後の牌が捨てられた時にロン和了した場合に成立します。'
+            },
+            'rinshan': {
+                title: '嶺上開花',
+                description: '嶺上牌でツモ和了する1翻役です。',
+                details: 'カンをした後に引く嶺上牌でツモ和了した場合に成立します。'
+            },
+            'chankan': {
+                title: '槍槓',
+                description: '他家の加槓に対してロン和了する1翻役です。',
+                details: '他家が明刻に同じ牌を加えて槓子にする際、その牌でロン和了した場合に成立します。'
+            }
+        };
+        
+        const info = conditionInfo[conditionType];
+        if (info) {
+            title.textContent = info.title;
+            description.textContent = info.description;
+            details.textContent = info.details;
+            modal.style.display = 'block';
+        }
+    }
+    
+    closeConditionModal() {
+        document.getElementById('conditionModal').style.display = 'none';
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

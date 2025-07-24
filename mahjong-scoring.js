@@ -13,6 +13,13 @@ class MahjongScoring {
 
         this.yakuList = {
             'riichi': { name: 'リーチ', han: 1 },
+            'doubleRiichi': { name: 'ダブルリーチ', han: 2 },
+            'ippatsu': { name: '一発', han: 1 },
+            'tsumo': { name: 'ツモ', han: 1 },
+            'haitei': { name: '海底撈月', han: 1 },
+            'houtei': { name: '河底撈魚', han: 1 },
+            'rinshan': { name: '嶺上開花', han: 1 },
+            'chankan': { name: '槍槓', han: 1 },
             'tanyao': { name: 'タンヤオ', han: 1 },
             'pinfu': { name: 'ピンフ', han: 1 },
             'iipeikou': { name: 'イーペーコー', han: 1 },
@@ -80,7 +87,7 @@ class MahjongScoring {
         }
 
         const bestGroup = groups[0];
-        const yaku = this.detectYaku(tiles, bestGroup);
+        const yaku = this.detectYaku(tiles, bestGroup, conditions);
         const han = yaku.reduce((sum, y) => sum + y.han, 0);
         const fu = this.calculateFu(bestGroup, conditions);
         const points = this.calculatePoints(han, fu);
@@ -232,7 +239,7 @@ class MahjongScoring {
         return [num + suit, (num + 1) + suit, (num + 2) + suit];
     }
 
-    detectYaku(tiles, groups) {
+    detectYaku(tiles, groups, conditions = {}) {
         const yaku = [];
         
         if (groups.type === 'kokushi') {
@@ -275,6 +282,38 @@ class MahjongScoring {
 
         const yakuhaiYaku = this.detectYakuhai(groups);
         yaku.push(...yakuhaiYaku);
+
+        if (conditions.riichi) {
+            yaku.push(this.yakuList.riichi);
+        }
+        
+        if (conditions.doubleRiichi) {
+            yaku.push(this.yakuList.doubleRiichi);
+        }
+        
+        if (conditions.ippatsu && conditions.riichi) {
+            yaku.push(this.yakuList.ippatsu);
+        }
+        
+        if (conditions.tsumo) {
+            yaku.push(this.yakuList.tsumo);
+        }
+        
+        if (conditions.haitei) {
+            yaku.push(this.yakuList.haitei);
+        }
+        
+        if (conditions.houtei) {
+            yaku.push(this.yakuList.houtei);
+        }
+        
+        if (conditions.rinshan) {
+            yaku.push(this.yakuList.rinshan);
+        }
+        
+        if (conditions.chankan) {
+            yaku.push(this.yakuList.chankan);
+        }
 
         if (yaku.length === 0) {
             yaku.push({ name: 'ノー役', han: 0 });

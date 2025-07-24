@@ -274,13 +274,34 @@
                 <div id="gameConditions" class="game-conditions" style="display: none;">
                     <h3>ゲーム条件</h3>
                     <div class="conditions-grid">
-                        <label><input type="checkbox" id="riichi"> リーチ</label>
-                        <label><input type="checkbox" id="doubleRiichi"> ダブルリーチ</label>
-                        <label><input type="checkbox" id="ippatsu"> 一発</label>
-                        <label><input type="checkbox" id="haitei"> 海底</label>
-                        <label><input type="checkbox" id="houtei"> 河底</label>
-                        <label><input type="checkbox" id="rinshan"> 嶺上</label>
-                        <label><input type="checkbox" id="chankan"> 槍槓</label>
+                        <label>
+                            <input type="checkbox" id="riichi"> リーチ
+                            <button type="button" class="help-btn" onclick="app.showConditionModal('riichi')">?</button>
+                        </label>
+                        <label>
+                            <input type="checkbox" id="doubleRiichi"> ダブルリーチ
+                            <button type="button" class="help-btn" onclick="app.showConditionModal('doubleRiichi')">?</button>
+                        </label>
+                        <label>
+                            <input type="checkbox" id="ippatsu"> 一発
+                            <button type="button" class="help-btn" onclick="app.showConditionModal('ippatsu')">?</button>
+                        </label>
+                        <label>
+                            <input type="checkbox" id="haitei"> 海底
+                            <button type="button" class="help-btn" onclick="app.showConditionModal('haitei')">?</button>
+                        </label>
+                        <label>
+                            <input type="checkbox" id="houtei"> 河底
+                            <button type="button" class="help-btn" onclick="app.showConditionModal('houtei')">?</button>
+                        </label>
+                        <label>
+                            <input type="checkbox" id="rinshan"> 嶺上
+                            <button type="button" class="help-btn" onclick="app.showConditionModal('rinshan')">?</button>
+                        </label>
+                        <label>
+                            <input type="checkbox" id="chankan"> 槍槓
+                            <button type="button" class="help-btn" onclick="app.showConditionModal('chankan')">?</button>
+                        </label>
                     </div>
                     
                     <div class="wind-selector">
@@ -367,6 +388,23 @@
     </div>
 
     <script src="https://docs.opencv.org/4.5.0/opencv.js"></script>
+    <!-- Condition Help Modal -->
+    <div id="conditionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">条件の説明</h3>
+                <span class="close" onclick="app.closeConditionModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p id="modalDescription"></p>
+                <div id="modalDetails"></div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="app.closeConditionModal()">閉じる</button>
+            </div>
+        </div>
+    </div>
+
     <script src="mahjong-recognition.js"></script>
     <script src="mahjong-scoring.js"></script>
     <script src="app.js"></script>
