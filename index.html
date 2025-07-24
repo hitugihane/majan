@@ -14,92 +14,227 @@
         </header>
 
         <main>
+            <section class="hand-type-section">
+                <h2>手牌の種類を選択</h2>
+                <div class="hand-type-selector">
+                    <label>
+                        <input type="radio" name="handType" value="standard" checked>
+                        <span>標準手 (4メンツ + 1雀頭)</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="handType" value="chiitoitsu">
+                        <span>チートイ (7対子)</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="handType" value="kokushi">
+                        <span>国士無双 (13種類の么九牌)</span>
+                    </label>
+                </div>
+            </section>
+
             <section class="manual-selection-section">
-                <div class="meld-builder">
-                    <h2>メンツ作成</h2>
-                    <div class="meld-controls">
-                        <div class="meld-type-selector">
-                            <label>メンツの種類:</label>
-                            <select id="meldType">
-                                <option value="shuntsu">順子 (3枚連続)</option>
-                                <option value="koutsu">刻子 (同じ牌3枚)</option>
-                                <option value="kantsu">槓子 (同じ牌4枚)</option>
-                            </select>
-                            <select id="kantsuType" style="display: none;">
-                                <option value="ankan">暗槓</option>
-                                <option value="minkan">明槓</option>
-                            </select>
+                <!-- Standard hand workflow -->
+                <div id="standardHandSection" class="hand-workflow">
+                    <div class="meld-builder">
+                        <h2>メンツ作成</h2>
+                        <div class="meld-controls">
+                            <div class="meld-type-selector">
+                                <label>メンツの種類:</label>
+                                <select id="meldType">
+                                    <option value="shuntsu">順子 (3枚連続)</option>
+                                    <option value="koutsu">刻子 (同じ牌3枚)</option>
+                                    <option value="kantsu">槓子 (同じ牌4枚)</option>
+                                </select>
+                                <select id="kantsuType" style="display: none;">
+                                    <option value="ankan">暗槓</option>
+                                    <option value="minkan">明槓</option>
+                                </select>
+                            </div>
+                            
+                            <div class="current-meld">
+                                <h3>現在のメンツ: <span id="currentMeldDisplay">なし</span></h3>
+                                <div id="currentMeldTiles" class="meld-tiles"></div>
+                                <div class="meld-actions">
+                                    <button id="completeMeld" disabled>メンツ完成</button>
+                                    <button id="clearMeld">クリア</button>
+                                </div>
+                            </div>
                         </div>
-                        
-                        <div class="current-meld">
-                            <h3>現在のメンツ: <span id="currentMeldDisplay">なし</span></h3>
-                            <div id="currentMeldTiles" class="meld-tiles"></div>
-                            <div class="meld-actions">
-                                <button id="completeMeld" disabled>メンツ完成</button>
-                                <button id="clearMeld">クリア</button>
+                    </div>
+
+                    <div class="tile-selector">
+                        <h2>牌を選択</h2>
+                        <div class="tile-groups">
+                            <div class="tile-group">
+                                <h3>萬子</h3>
+                                <div class="tiles-row">
+                                    <div class="tile clickable" data-tile="1m">一萬</div>
+                                    <div class="tile clickable" data-tile="2m">二萬</div>
+                                    <div class="tile clickable" data-tile="3m">三萬</div>
+                                    <div class="tile clickable" data-tile="4m">四萬</div>
+                                    <div class="tile clickable" data-tile="5m">五萬</div>
+                                    <div class="tile clickable" data-tile="6m">六萬</div>
+                                    <div class="tile clickable" data-tile="7m">七萬</div>
+                                    <div class="tile clickable" data-tile="8m">八萬</div>
+                                    <div class="tile clickable" data-tile="9m">九萬</div>
+                                </div>
+                            </div>
+                            
+                            <div class="tile-group">
+                                <h3>筒子</h3>
+                                <div class="tiles-row">
+                                    <div class="tile clickable" data-tile="1p">一筒</div>
+                                    <div class="tile clickable" data-tile="2p">二筒</div>
+                                    <div class="tile clickable" data-tile="3p">三筒</div>
+                                    <div class="tile clickable" data-tile="4p">四筒</div>
+                                    <div class="tile clickable" data-tile="5p">五筒</div>
+                                    <div class="tile clickable" data-tile="6p">六筒</div>
+                                    <div class="tile clickable" data-tile="7p">七筒</div>
+                                    <div class="tile clickable" data-tile="8p">八筒</div>
+                                    <div class="tile clickable" data-tile="9p">九筒</div>
+                                </div>
+                            </div>
+                            
+                            <div class="tile-group">
+                                <h3>索子</h3>
+                                <div class="tiles-row">
+                                    <div class="tile clickable" data-tile="1s">一索</div>
+                                    <div class="tile clickable" data-tile="2s">二索</div>
+                                    <div class="tile clickable" data-tile="3s">三索</div>
+                                    <div class="tile clickable" data-tile="4s">四索</div>
+                                    <div class="tile clickable" data-tile="5s">五索</div>
+                                    <div class="tile clickable" data-tile="6s">六索</div>
+                                    <div class="tile clickable" data-tile="7s">七索</div>
+                                    <div class="tile clickable" data-tile="8s">八索</div>
+                                    <div class="tile clickable" data-tile="9s">九索</div>
+                                </div>
+                            </div>
+                            
+                            <div class="tile-group">
+                                <h3>字牌</h3>
+                                <div class="tiles-row">
+                                    <div class="tile clickable" data-tile="1z">東</div>
+                                    <div class="tile clickable" data-tile="2z">南</div>
+                                    <div class="tile clickable" data-tile="3z">西</div>
+                                    <div class="tile clickable" data-tile="4z">北</div>
+                                    <div class="tile clickable" data-tile="5z">白</div>
+                                    <div class="tile clickable" data-tile="6z">發</div>
+                                    <div class="tile clickable" data-tile="7z">中</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+                
+                <!-- Chiitoitsu workflow -->
+                <div id="chiitoitsuHandSection" class="hand-workflow" style="display: none;">
+                    <div class="pairs-builder">
+                        <h2>対子作成 (7つの対子が必要)</h2>
+                        <div class="current-pairs">
+                            <h3>完成した対子: <span id="completedPairsCount">0</span>/7</h3>
+                            <div id="completedPairsList" class="pairs-list"></div>
+                        </div>
+                        <div class="pair-input">
+                            <h3>現在の対子: <span id="currentPairDisplay">なし</span></h3>
+                            <div id="currentPairTiles" class="pair-tiles"></div>
+                            <div class="pair-actions">
+                                <button id="completePairBtn" disabled>対子完成</button>
+                                <button id="clearPairBtn">クリア</button>
+                            </div>
+                        </div>
+                    </div>
 
-                <div class="tile-selector">
-                    <h2>牌を選択</h2>
-                    <div class="tile-groups">
-                        <div class="tile-group">
-                            <h3>萬子</h3>
-                            <div class="tiles-row">
-                                <div class="tile clickable" data-tile="1m">一萬</div>
-                                <div class="tile clickable" data-tile="2m">二萬</div>
-                                <div class="tile clickable" data-tile="3m">三萬</div>
-                                <div class="tile clickable" data-tile="4m">四萬</div>
-                                <div class="tile clickable" data-tile="5m">五萬</div>
-                                <div class="tile clickable" data-tile="6m">六萬</div>
-                                <div class="tile clickable" data-tile="7m">七萬</div>
-                                <div class="tile clickable" data-tile="8m">八萬</div>
-                                <div class="tile clickable" data-tile="9m">九萬</div>
+                    <div class="tile-selector">
+                        <h2>牌を選択</h2>
+                        <div class="tile-groups">
+                            <div class="tile-group">
+                                <h3>萬子</h3>
+                                <div class="tiles-row">
+                                    <div class="tile clickable" data-tile="1m">一萬</div>
+                                    <div class="tile clickable" data-tile="2m">二萬</div>
+                                    <div class="tile clickable" data-tile="3m">三萬</div>
+                                    <div class="tile clickable" data-tile="4m">四萬</div>
+                                    <div class="tile clickable" data-tile="5m">五萬</div>
+                                    <div class="tile clickable" data-tile="6m">六萬</div>
+                                    <div class="tile clickable" data-tile="7m">七萬</div>
+                                    <div class="tile clickable" data-tile="8m">八萬</div>
+                                    <div class="tile clickable" data-tile="9m">九萬</div>
+                                </div>
+                            </div>
+                            
+                            <div class="tile-group">
+                                <h3>筒子</h3>
+                                <div class="tiles-row">
+                                    <div class="tile clickable" data-tile="1p">一筒</div>
+                                    <div class="tile clickable" data-tile="2p">二筒</div>
+                                    <div class="tile clickable" data-tile="3p">三筒</div>
+                                    <div class="tile clickable" data-tile="4p">四筒</div>
+                                    <div class="tile clickable" data-tile="5p">五筒</div>
+                                    <div class="tile clickable" data-tile="6p">六筒</div>
+                                    <div class="tile clickable" data-tile="7p">七筒</div>
+                                    <div class="tile clickable" data-tile="8p">八筒</div>
+                                    <div class="tile clickable" data-tile="9p">九筒</div>
+                                </div>
+                            </div>
+                            
+                            <div class="tile-group">
+                                <h3>索子</h3>
+                                <div class="tiles-row">
+                                    <div class="tile clickable" data-tile="1s">一索</div>
+                                    <div class="tile clickable" data-tile="2s">二索</div>
+                                    <div class="tile clickable" data-tile="3s">三索</div>
+                                    <div class="tile clickable" data-tile="4s">四索</div>
+                                    <div class="tile clickable" data-tile="5s">五索</div>
+                                    <div class="tile clickable" data-tile="6s">六索</div>
+                                    <div class="tile clickable" data-tile="7s">七索</div>
+                                    <div class="tile clickable" data-tile="8s">八索</div>
+                                    <div class="tile clickable" data-tile="9s">九索</div>
+                                </div>
+                            </div>
+                            
+                            <div class="tile-group">
+                                <h3>字牌</h3>
+                                <div class="tiles-row">
+                                    <div class="tile clickable" data-tile="1z">東</div>
+                                    <div class="tile clickable" data-tile="2z">南</div>
+                                    <div class="tile clickable" data-tile="3z">西</div>
+                                    <div class="tile clickable" data-tile="4z">北</div>
+                                    <div class="tile clickable" data-tile="5z">白</div>
+                                    <div class="tile clickable" data-tile="6z">發</div>
+                                    <div class="tile clickable" data-tile="7z">中</div>
+                                </div>
                             </div>
                         </div>
-                        
-                        <div class="tile-group">
-                            <h3>筒子</h3>
-                            <div class="tiles-row">
-                                <div class="tile clickable" data-tile="1p">一筒</div>
-                                <div class="tile clickable" data-tile="2p">二筒</div>
-                                <div class="tile clickable" data-tile="3p">三筒</div>
-                                <div class="tile clickable" data-tile="4p">四筒</div>
-                                <div class="tile clickable" data-tile="5p">五筒</div>
-                                <div class="tile clickable" data-tile="6p">六筒</div>
-                                <div class="tile clickable" data-tile="7p">七筒</div>
-                                <div class="tile clickable" data-tile="8p">八筒</div>
-                                <div class="tile clickable" data-tile="9p">九筒</div>
+                    </div>
+                </div>
+                
+                <!-- Kokushi workflow -->
+                <div id="kokushiHandSection" class="hand-workflow" style="display: none;">
+                    <div class="kokushi-builder">
+                        <h2>国士無双 (13種類の么九牌 + 1つの対子)</h2>
+                        <div class="required-tiles">
+                            <h3>必要な牌:</h3>
+                            <div class="kokushi-requirements">
+                                <div class="tile-requirement clickable" data-tile="1m">一萬</div>
+                                <div class="tile-requirement clickable" data-tile="9m">九萬</div>
+                                <div class="tile-requirement clickable" data-tile="1p">一筒</div>
+                                <div class="tile-requirement clickable" data-tile="9p">九筒</div>
+                                <div class="tile-requirement clickable" data-tile="1s">一索</div>
+                                <div class="tile-requirement clickable" data-tile="9s">九索</div>
+                                <div class="tile-requirement clickable" data-tile="1z">東</div>
+                                <div class="tile-requirement clickable" data-tile="2z">南</div>
+                                <div class="tile-requirement clickable" data-tile="3z">西</div>
+                                <div class="tile-requirement clickable" data-tile="4z">北</div>
+                                <div class="tile-requirement clickable" data-tile="5z">白</div>
+                                <div class="tile-requirement clickable" data-tile="6z">發</div>
+                                <div class="tile-requirement clickable" data-tile="7z">中</div>
                             </div>
                         </div>
-                        
-                        <div class="tile-group">
-                            <h3>索子</h3>
-                            <div class="tiles-row">
-                                <div class="tile clickable" data-tile="1s">一索</div>
-                                <div class="tile clickable" data-tile="2s">二索</div>
-                                <div class="tile clickable" data-tile="3s">三索</div>
-                                <div class="tile clickable" data-tile="4s">四索</div>
-                                <div class="tile clickable" data-tile="5s">五索</div>
-                                <div class="tile clickable" data-tile="6s">六索</div>
-                                <div class="tile clickable" data-tile="7s">七索</div>
-                                <div class="tile clickable" data-tile="8s">八索</div>
-                                <div class="tile clickable" data-tile="9s">九索</div>
-                            </div>
-                        </div>
-                        
-                        <div class="tile-group">
-                            <h3>字牌</h3>
-                            <div class="tiles-row">
-                                <div class="tile clickable" data-tile="1z">東</div>
-                                <div class="tile clickable" data-tile="2z">南</div>
-                                <div class="tile clickable" data-tile="3z">西</div>
-                                <div class="tile clickable" data-tile="4z">北</div>
-                                <div class="tile clickable" data-tile="5z">白</div>
-                                <div class="tile clickable" data-tile="6z">發</div>
-                                <div class="tile clickable" data-tile="7z">中</div>
+                        <div class="selected-kokushi">
+                            <h3>選択済み: <span id="kokushiCount">0</span>/14</h3>
+                            <div id="kokushiTiles" class="kokushi-tiles"></div>
+                            <div class="kokushi-actions">
+                                <button id="clearKokushi">クリア</button>
                             </div>
                         </div>
                     </div>

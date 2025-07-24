@@ -528,11 +528,53 @@ select {
 
 @media (max-width: 768px) {
     .container {
-        padding: 10px;
+        padding: 5px;
+        max-width: 100%;
     }
     
     header h1 {
-        font-size: 2rem;
+        font-size: 1.5rem;
+    }
+    
+    header p {
+        font-size: 0.9rem;
+    }
+    
+    .hand-workflow {
+        padding: 15px;
+    }
+    
+    .hand-type-selector {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .hand-type-selector label {
+        padding: 15px;
+        justify-content: center;
+        text-align: center;
+    }
+    
+    .tiles-row {
+        grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
+        gap: 3px;
+    }
+    
+    .tile {
+        width: 45px;
+        height: 60px;
+        font-size: 0.7rem;
+    }
+    
+    .tile-requirement {
+        width: 45px;
+        height: 60px;
+        font-size: 0.7rem;
+    }
+    
+    .kokushi-requirements {
+        grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
+        gap: 3px;
     }
     
     .score-details {
@@ -545,10 +587,6 @@ select {
         align-items: stretch;
     }
     
-    .tiles-row {
-        justify-content: center;
-    }
-    
     .wind-selector {
         flex-direction: column;
         gap: 10px;
@@ -558,12 +596,211 @@ select {
         flex-direction: column;
     }
     
-    .tile-selector {
+    .pair-actions {
         flex-direction: column;
-        align-items: stretch;
+    }
+    
+    .kokushi-actions {
+        flex-direction: column;
     }
     
     select {
         min-width: auto;
+    }
+    
+    .pairs-list {
+        justify-content: center;
+    }
+    
+    .kokushi-tiles {
+        justify-content: center;
+    }
+    
+    .pairs-list {
+        justify-content: center;
+    }
+    
+    .kokushi-tiles {
+        justify-content: center;
+    }
+}
+
+/* Hand type selector */
+.hand-type-section {
+    margin-bottom: 20px;
+}
+
+.hand-type-selector {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.hand-type-selector label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: white;
+}
+
+.hand-type-selector input[type="radio"] {
+    margin: 0;
+}
+
+.hand-type-selector label:hover {
+    border-color: #2c5530;
+    background: #f8f9fa;
+}
+
+.hand-type-selector input[type="radio"]:checked + span {
+    background: #e8f5e8;
+    border-color: #2c5530;
+    font-weight: bold;
+}
+
+/* Chiitoitsu styles */
+.pairs-builder {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.pairs-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 15px 0;
+    min-height: 80px;
+    padding: 15px;
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+}
+
+.completed-pair {
+    display: flex;
+    gap: 2px;
+    padding: 5px;
+    background: #e8f5e8;
+    border-radius: 5px;
+    border: 1px solid #4caf50;
+    align-items: center;
+}
+
+.completed-pair button {
+    margin-left: 5px;
+    padding: 2px 6px;
+    font-size: 0.8rem;
+    background: #ff4444;
+}
+
+.pair-input {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.pair-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+/* Kokushi styles */
+.kokushi-builder {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.kokushi-requirements {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+    gap: 5px;
+    margin: 15px 0;
+}
+
+.tile-requirement {
+    width: 60px;
+    height: 80px;
+    background: #fff;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.tile-requirement:hover {
+    border-color: #2c5530;
+    background: #f0f8f0;
+}
+
+.tile-requirement.selected {
+    background: #e8f5e8;
+    border-color: #4caf50;
+}
+
+.tile-requirement.completed {
+    background: #4caf50;
+    color: white;
+    border-color: #2e7d32;
+}
+
+.kokushi-tiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 15px 0;
+    min-height: 80px;
+    padding: 15px;
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+}
+
+.kokushi-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.hand-workflow {
+    margin-bottom: 20px;
+}
+
+@media (min-width: 769px) {
+    .container {
+        max-width: 800px;
+    }
+    
+    .hand-type-selector {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+    }
+    
+    .hand-type-selector label {
+        padding: 12px 20px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .hand-type-selector input[type="radio"]:checked + span {
+        background: #e8f5e8;
+        border-color: #2c5530;
     }
 }
