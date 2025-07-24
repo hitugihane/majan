@@ -25,6 +25,17 @@ class MahjongApp {
         this.dealerPointsSpan = document.getElementById('dealerPoints');
         this.nonDealerPointsSpan = document.getElementById('nonDealerPoints');
         
+        this.cameraTab = document.getElementById('cameraTab');
+        this.photoTab = document.getElementById('photoTab');
+        this.cameraMode = document.getElementById('cameraMode');
+        this.photoMode = document.getElementById('photoMode');
+        this.uploadArea = document.getElementById('uploadArea');
+        this.photoInput = document.getElementById('photoInput');
+        this.uploadedImageContainer = document.getElementById('uploadedImageContainer');
+        this.uploadedImage = document.getElementById('uploadedImage');
+        this.analyzePhotoBtn = document.getElementById('analyzePhoto');
+        this.removePhotoBtn = document.getElementById('removePhoto');
+        
         this.canvas.width = 640;
         this.canvas.height = 480;
         this.processCanvas.width = 640;
@@ -36,6 +47,19 @@ class MahjongApp {
         this.captureBtn.addEventListener('click', () => this.captureAndRecognize());
         this.resetBtn.addEventListener('click', () => this.resetRecognition());
         this.addTileBtn.addEventListener('click', () => this.addManualTile());
+        
+        this.cameraTab.addEventListener('click', () => this.switchToCamera());
+        this.photoTab.addEventListener('click', () => this.switchToPhoto());
+        
+        this.uploadArea.addEventListener('click', () => this.photoInput.click());
+        this.uploadArea.addEventListener('dragover', (e) => this.handleDragOver(e));
+        this.uploadArea.addEventListener('drop', (e) => this.handleDrop(e));
+        this.uploadArea.addEventListener('dragenter', (e) => this.handleDragEnter(e));
+        this.uploadArea.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+        
+        this.photoInput.addEventListener('change', (e) => this.handleFileSelect(e));
+        this.analyzePhotoBtn.addEventListener('click', () => this.analyzeUploadedPhoto());
+        this.removePhotoBtn.addEventListener('click', () => this.removeUploadedPhoto());
         
         document.querySelectorAll('.sample-hand').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -191,6 +215,95 @@ class MahjongApp {
                 ${yakuHtml}
             </div>
         `;
+    }
+
+    switchToCamera() {
+        this.cameraTab.classList.add('active');
+        this.photoTab.classList.remove('active');
+        this.cameraMode.style.display = 'block';
+        this.photoMode.style.display = 'none';
+    }
+
+    switchToPhoto() {
+        this.cameraTab.classList.remove('active');
+        this.photoTab.classList.add('active');
+        this.cameraMode.style.display = 'none';
+        this.photoMode.style.display = 'block';
+    }
+
+    handleDragOver(e) {
+        e.preventDefault();
+        this.uploadArea.classList.add('dragover');
+    }
+
+    handleDragEnter(e) {
+        e.preventDefault();
+        this.uploadArea.classList.add('dragover');
+    }
+
+    handleDragLeave(e) {
+        e.preventDefault();
+        if (!this.uploadArea.contains(e.relatedTarget)) {
+            this.uploadArea.classList.remove('dragover');
+        }
+    }
+
+    handleDrop(e) {
+        e.preventDefault();
+        this.uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            this.processUploadedFile(files[0]);
+        }
+    }
+
+    handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (file) {
+            this.processUploadedFile(file);
+        }
+    }
+
+    processUploadedFile(file) {
+        if (!file.type.startsWith('image/')) {
+            alert('画像ファイルを選択してください。');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            this.uploadedImage.src = e.target.result;
+            this.uploadArea.style.display = 'none';
+            this.uploadedImageContainer.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async analyzeUploadedPhoto() {
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = this.uploadedImage.naturalWidth;
+            canvas.height = this.uploadedImage.naturalHeight;
+            ctx.drawImage(this.uploadedImage, 0, 0);
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const tiles = await this.recognition.recognizeTiles(imageData, canvas);
+            
+            this.processTileRecognition(tiles);
+        } catch (error) {
+            console.error('Error analyzing uploaded photo:', error);
+            this.simulateRecognition();
+        }
+    }
+
+    removeUploadedPhoto() {
+        this.uploadedImageContainer.style.display = 'none';
+        this.uploadArea.style.display = 'block';
+        this.uploadedImage.src = '';
+        this.photoInput.value = '';
     }
 }
 

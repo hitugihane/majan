@@ -15,15 +15,42 @@
 
         <main>
             <section class="camera-section">
-                <div class="camera-container">
-                    <video id="video" autoplay playsinline></video>
-                    <canvas id="canvas" style="display: none;"></canvas>
-                    <canvas id="processCanvas" style="display: none;"></canvas>
+                <div class="input-tabs">
+                    <button id="cameraTab" class="tab-button active">カメラ</button>
+                    <button id="photoTab" class="tab-button">写真アップロード</button>
                 </div>
-                <div class="camera-controls">
-                    <button id="startCamera">カメラ開始</button>
-                    <button id="captureImage" disabled>牌を認識</button>
-                    <button id="resetRecognition">リセット</button>
+                
+                <div id="cameraMode" class="input-mode">
+                    <div class="camera-container">
+                        <video id="video" autoplay playsinline></video>
+                        <canvas id="canvas" style="display: none;"></canvas>
+                        <canvas id="processCanvas" style="display: none;"></canvas>
+                    </div>
+                    <div class="camera-controls">
+                        <button id="startCamera">カメラ開始</button>
+                        <button id="captureImage" disabled>牌を認識</button>
+                        <button id="resetRecognition">リセット</button>
+                    </div>
+                </div>
+
+                <div id="photoMode" class="input-mode" style="display: none;">
+                    <div class="photo-upload-container">
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-content">
+                                <div class="upload-icon">📷</div>
+                                <p>写真をドラッグ&ドロップまたはクリックして選択</p>
+                                <p class="upload-hint">JPG, PNG形式の画像をアップロードしてください</p>
+                            </div>
+                            <input type="file" id="photoInput" accept="image/*" style="display: none;">
+                        </div>
+                        <div id="uploadedImageContainer" style="display: none;">
+                            <img id="uploadedImage" alt="アップロードされた画像">
+                            <div class="photo-controls">
+                                <button id="analyzePhoto">牌を認識</button>
+                                <button id="removePhoto">画像を削除</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
