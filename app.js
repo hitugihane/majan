@@ -9,6 +9,8 @@ class MahjongApp {
         this.currentPair = [];
         this.kokushiTiles = [];
         this.gameConditions = {};
+        this.winningTile = null;
+        this.winningMethod = 'tsumo';
         
         this.initializeElements();
         this.bindEvents();
@@ -46,11 +48,18 @@ class MahjongApp {
         this.kokushiCountSpan = document.getElementById('kokushiCount');
         this.kokushiTilesDiv = document.getElementById('kokushiTiles');
         this.clearKokushiBtn = document.getElementById('clearKokushi');
+        
+        this.winningTileOptionsDiv = document.getElementById('winningTileOptions');
+        this.selectedWinningTileSpan = document.getElementById('selectedWinningTile');
     }
 
     bindEvents() {
         document.querySelectorAll('input[name="handType"]').forEach(radio => {
             radio.addEventListener('change', (e) => this.onHandTypeChange(e.target.value));
+        });
+        
+        document.querySelectorAll('input[name="winningMethod"]').forEach(radio => {
+            radio.addEventListener('change', (e) => this.onWinningMethodChange(e.target.value));
         });
         
         this.meldTypeSelect.addEventListener('change', () => this.onMeldTypeChange());
@@ -265,10 +274,15 @@ class MahjongApp {
 
     showGameConditions() {
         this.gameConditionsDiv.style.display = 'block';
+        this.populateWinningTileOptions();
     }
 
     hideGameConditions() {
         this.gameConditionsDiv.style.display = 'none';
+        this.winningTile = null;
+        this.winningMethod = 'tsumo';
+        this.updateWinningTileDisplay();
+        this.calculateScoreBtn.disabled = true;
     }
 
     calculateScore() {
@@ -291,14 +305,16 @@ class MahjongApp {
             riichi: document.getElementById('riichi').checked,
             doubleRiichi: document.getElementById('doubleRiichi').checked,
             ippatsu: document.getElementById('ippatsu').checked,
-            tsumo: document.getElementById('tsumo').checked,
+            tsumo: this.winningMethod === 'tsumo',
             haitei: document.getElementById('haitei').checked,
             houtei: document.getElementById('houtei').checked,
             rinshan: document.getElementById('rinshan').checked,
             chankan: document.getElementById('chankan').checked,
             roundWind: document.getElementById('roundWind').value,
             seatWind: document.getElementById('seatWind').value,
-            melds: this.completedMelds
+            melds: this.completedMelds,
+            winningTile: this.winningTile,
+            winningMethod: this.winningMethod
         };
         
         const analysis = this.scoring.analyzeHand(allTiles, conditions);
@@ -340,6 +356,8 @@ class MahjongApp {
         this.completedPairs = [];
         this.currentPair = [];
         this.kokushiTiles = [];
+        this.winningTile = null;
+        this.winningMethod = 'tsumo';
         
         this.clearCurrentMeld();
         this.updateCompletedMeldsDisplay();
@@ -354,6 +372,7 @@ class MahjongApp {
         }
         
         document.querySelectorAll('#gameConditions input[type="checkbox"]').forEach(cb => cb.checked = false);
+        document.querySelector('input[name="winningMethod"][value="tsumo"]').checked = true;
     }
 
     loadSampleHand(tiles) {
@@ -476,6 +495,60 @@ class MahjongApp {
         this.kokushiTiles = [];
         this.updateKokushiDisplay();
         this.hideGameConditions();
+    }
+
+    onWinningMethodChange(method) {
+        this.winningMethod = method;
+        document.getElementById('tsumo').checked = (method === 'tsumo');
+    }
+
+    populateWinningTileOptions() {
+        let allTiles = [];
+        
+        if (this.handType === 'standard') {
+            this.completedMelds.forEach(meld => {
+                allTiles.push(...meld.tiles);
+            });
+            allTiles.push(...this.pair);
+        } else if (this.handType === 'chiitoitsu') {
+            this.completedPairs.forEach(pair => {
+                allTiles.push(...pair);
+            });
+        } else if (this.handType === 'kokushi') {
+            allTiles = [...this.kokushiTiles];
+        }
+        
+        const uniqueTiles = [...new Set(allTiles)];
+        
+        const tilesHtml = uniqueTiles.map(tile => {
+            const tileName = this.scoring.getTileName(tile);
+            return `<div class="winning-tile-option tile tile-${tile}" data-tile="${tile}">${tileName}</div>`;
+        }).join('');
+        
+        this.winningTileOptionsDiv.innerHTML = tilesHtml;
+        
+        this.winningTileOptionsDiv.querySelectorAll('.winning-tile-option').forEach(tile => {
+            tile.addEventListener('click', (e) => this.selectWinningTile(e.target.dataset.tile));
+        });
+    }
+
+    selectWinningTile(tileCode) {
+        this.winningTile = tileCode;
+        this.updateWinningTileDisplay();
+        this.calculateScoreBtn.disabled = false;
+        
+        this.winningTileOptionsDiv.querySelectorAll('.winning-tile-option').forEach(tile => {
+            tile.classList.toggle('selected', tile.dataset.tile === tileCode);
+        });
+    }
+
+    updateWinningTileDisplay() {
+        if (this.winningTile) {
+            const tileName = this.scoring.getTileName(this.winningTile);
+            this.selectedWinningTileSpan.textContent = tileName;
+        } else {
+            this.selectedWinningTileSpan.textContent = '未選択';
+        }
     }
 }
 
