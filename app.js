@@ -241,7 +241,8 @@ class MahjongApp {
             rinshan: document.getElementById('rinshan').checked,
             chankan: document.getElementById('chankan').checked,
             roundWind: document.getElementById('roundWind').value,
-            seatWind: document.getElementById('seatWind').value
+            seatWind: document.getElementById('seatWind').value,
+            melds: this.completedMelds
         };
         
         const analysis = this.scoring.analyzeHand(allTiles, conditions);
