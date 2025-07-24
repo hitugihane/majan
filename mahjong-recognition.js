@@ -46,8 +46,8 @@ class MahjongRecognition {
 
             const tiles = [];
             const imageArea = src.rows * src.cols;
-            const minArea = Math.max(500, imageArea * 0.001); // Dynamic minimum based on image size
-            const maxArea = Math.min(50000, imageArea * 0.1); // Dynamic maximum based on image size
+            const minArea = Math.max(200, imageArea * 0.0005); // Lower minimum for smaller tiles
+            const maxArea = Math.min(100000, imageArea * 0.3); // Higher maximum to allow larger contours
             
             console.log(`Processing ${contours.size()} contours, area range: ${minArea}-${maxArea}`);
 
