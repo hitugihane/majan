@@ -259,7 +259,6 @@
                         <label><input type="checkbox" id="riichi"> リーチ</label>
                         <label><input type="checkbox" id="doubleRiichi"> ダブルリーチ</label>
                         <label><input type="checkbox" id="ippatsu"> 一発</label>
-                        <label><input type="checkbox" id="tsumo"> ツモ</label>
                         <label><input type="checkbox" id="haitei"> 海底</label>
                         <label><input type="checkbox" id="houtei"> 河底</label>
                         <label><input type="checkbox" id="rinshan"> 嶺上</label>
@@ -285,8 +284,32 @@
                         </label>
                     </div>
                     
+                    <div class="winning-tile-section">
+                        <h3>上がり牌を選択</h3>
+                        <div class="winning-method">
+                            <label>
+                                <input type="radio" name="winningMethod" value="tsumo" checked>
+                                ツモ (自摸)
+                            </label>
+                            <label>
+                                <input type="radio" name="winningMethod" value="ron">
+                                ロン (他家の捨て牌)
+                            </label>
+                        </div>
+                        <div class="winning-tile-selector">
+                            <p>上がり牌を選択してください:</p>
+                            <div id="winningTileOptions" class="winning-tile-options">
+                                <!-- Winning tile options will be populated by JavaScript -->
+                            </div>
+                            <div class="selected-winning-tile">
+                                <span>選択された上がり牌: </span>
+                                <span id="selectedWinningTile">未選択</span>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="final-actions">
-                        <button id="calculateScore">点数計算</button>
+                        <button id="calculateScore" disabled>点数計算</button>
                         <button id="resetHand">手牌リセット</button>
                     </div>
                 </div>
