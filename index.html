@@ -51,6 +51,24 @@
                                 </select>
                             </div>
                             
+                            <div class="meld-source-selector">
+                                <h4>メンツの取得方法:</h4>
+                                <div class="meld-source-options">
+                                    <label>
+                                        <input type="radio" name="meldSource" value="tsumo" checked>
+                                        <span>手牌 (自分で引いた)</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="meldSource" value="pon">
+                                        <span>ポン (他家の捨て牌)</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="meldSource" value="chi">
+                                        <span>チー (上家の捨て牌)</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
                             <div class="current-meld">
                                 <h3>現在のメンツ: <span id="currentMeldDisplay">なし</span></h3>
                                 <div id="currentMeldTiles" class="meld-tiles"></div>

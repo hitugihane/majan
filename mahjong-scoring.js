@@ -82,7 +82,7 @@ class MahjongScoring {
         const bestGroup = groups[0];
         const yaku = this.detectYaku(tiles, bestGroup);
         const han = yaku.reduce((sum, y) => sum + y.han, 0);
-        const fu = this.calculateFu(bestGroup);
+        const fu = this.calculateFu(bestGroup, conditions);
         const points = this.calculatePoints(han, fu);
 
         return {
@@ -387,21 +387,45 @@ class MahjongScoring {
         return yaku;
     }
 
-    calculateFu(groups) {
+    calculateFu(groups, conditions) {
         if (groups.type === 'chiitoitsu') return 25;
         if (groups.type === 'kokushi') return 30;
         
         let fu = 20;
         
-        const triplets = groups.melds.filter(meld => meld.type === 'triplet');
-        triplets.forEach(triplet => {
-            const tile = triplet.tile;
-            if (['1m', '9m', '1p', '9p', '1s', '9s'].includes(tile) || tile.includes('z')) {
-                fu += 8;
-            } else {
-                fu += 4;
-            }
-        });
+        if (conditions && conditions.melds) {
+            conditions.melds.forEach(meld => {
+                if (meld.type === 'koutsu') {
+                    const tile = meld.tiles[0];
+                    let points = (['1m', '9m', '1p', '9p', '1s', '9s'].includes(tile) || tile.includes('z')) ? 4 : 2;
+                    
+                    if (meld.source === 'tsumo') {
+                        fu += points * 2;
+                    } else {
+                        fu += points;
+                    }
+                } else if (meld.type === 'kantsu') {
+                    const tile = meld.tiles[0];
+                    let points = (['1m', '9m', '1p', '9p', '1s', '9s'].includes(tile) || tile.includes('z')) ? 16 : 8;
+                    
+                    if (meld.kantsuType === 'ankan') {
+                        fu += points * 2;
+                    } else {
+                        fu += points;
+                    }
+                }
+            });
+        } else {
+            const triplets = groups.melds.filter(meld => meld.type === 'triplet');
+            triplets.forEach(triplet => {
+                const tile = triplet.tile;
+                if (['1m', '9m', '1p', '9p', '1s', '9s'].includes(tile) || tile.includes('z')) {
+                    fu += 8;
+                } else {
+                    fu += 4;
+                }
+            });
+        }
         
         const honorTiles = ['1z', '2z', '3z', '4z', '5z', '6z', '7z'];
         if (honorTiles.includes(groups.pair)) {

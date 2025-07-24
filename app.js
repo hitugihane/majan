@@ -92,6 +92,10 @@ class MahjongApp {
     }
 
     onMeldTypeChange() {
+        if (!this.meldTypeSelect.value) {
+            this.meldTypeSelect.value = 'shuntsu';
+        }
+        
         const meldType = this.meldTypeSelect.value;
         this.kantsuTypeSelect.style.display = meldType === 'kantsu' ? 'inline' : 'none';
         this.clearCurrentMeld();
@@ -189,10 +193,13 @@ class MahjongApp {
     completeMeld() {
         const meldType = this.meldTypeSelect.value;
         const kantsuType = meldType === 'kantsu' ? this.kantsuTypeSelect.value : null;
+        const meldSourceElement = document.querySelector('input[name="meldSource"]:checked');
+        const meldSource = meldSourceElement ? meldSourceElement.value : 'tsumo';
         
         this.completedMelds.push({
             type: meldType,
             kantsuType: kantsuType,
+            source: meldSource,
             tiles: [...this.currentMeld]
         });
         
@@ -223,6 +230,12 @@ class MahjongApp {
                 'kantsu': meld.kantsuType === 'ankan' ? '暗槓' : '明槓'
             };
             
+            const sourceNames = {
+                'tsumo': '手牌',
+                'pon': 'ポン',
+                'chi': 'チー'
+            };
+            
             const tilesHtml = meld.tiles.map(tile => {
                 const tileName = this.scoring.getTileName(tile);
                 return `<div class="tile tile-${tile}">${tileName}</div>`;
@@ -230,7 +243,7 @@ class MahjongApp {
             
             return `
                 <div class="completed-meld">
-                    <h4>${meldTypeNames[meld.type]} ${index + 1}</h4>
+                    <h4>${meldTypeNames[meld.type]} ${index + 1} (${sourceNames[meld.source] || '手牌'})</h4>
                     <div class="meld-tiles">${tilesHtml}</div>
                     <button onclick="app.removeMeld(${index})">削除</button>
                 </div>

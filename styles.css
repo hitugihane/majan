@@ -616,12 +616,62 @@ select {
         justify-content: center;
     }
     
-    .pairs-list {
-        justify-content: center;
+    .winning-tile-section {
+        margin: 15px 0;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        display: block !important;
     }
     
-    .kokushi-tiles {
-        justify-content: center;
+    .winning-method {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .winning-method label {
+        padding: 12px 15px;
+        text-align: center;
+    }
+    
+    .winning-tile-options {
+        gap: 3px;
+        padding: 10px;
+    }
+    
+    .winning-tile-option {
+        width: 45px;
+        height: 60px;
+        font-size: 0.7rem;
+    }
+    
+    .meld-source-options {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .meld-source-options label {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background: white;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .meld-source-options label:hover {
+        border-color: #2c5530;
+        background: #f0f8f0;
+    }
+    
+    .meld-source-options input[type="radio"]:checked + span {
+        font-weight: bold;
+    }
+    
+    .meld-source-options label:has(input[type="radio"]:checked) {
+        background: #e8f5e8;
+        border-color: #4caf50;
     }
 }
 
@@ -860,6 +910,51 @@ select {
 
 .hand-workflow {
     margin-bottom: 20px;
+}
+
+.meld-source-selector {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.meld-source-selector h4 {
+    margin: 0 0 15px 0;
+    color: #2c5530;
+}
+
+.meld-source-options {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.meld-source-options label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: white;
+}
+
+.meld-source-options label:hover {
+    border-color: #2c5530;
+    background: #f0f8f0;
+}
+
+.meld-source-options input[type="radio"]:checked + span {
+    font-weight: bold;
+}
+
+.meld-source-options label:has(input[type="radio"]:checked) {
+    background: #e8f5e8;
+    border-color: #4caf50;
 }
 
 @media (min-width: 769px) {
