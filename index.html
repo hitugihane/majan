@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>麻雀カメラ点数計算</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>麻雀カメラ点数計算</h1>
+            <p>カメラで牌を読み取って自動で点数計算します</p>
+        </header>
+
+        <main>
+            <section class="camera-section">
+                <div class="camera-container">
+                    <video id="video" autoplay playsinline></video>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                    <canvas id="processCanvas" style="display: none;"></canvas>
+                </div>
+                <div class="camera-controls">
+                    <button id="startCamera">カメラ開始</button>
+                    <button id="captureImage" disabled>牌を認識</button>
+                    <button id="resetRecognition">リセット</button>
+                </div>
+            </section>
+
+            <section class="recognition-section">
+                <h2>認識された牌</h2>
+                <div id="recognizedTiles" class="tiles-grid">
+                    <p>まだ牌が認識されていません</p>
+                </div>
+                <div class="manual-correction">
+                    <h3>手動修正</h3>
+                    <div class="tile-selector">
+                        <select id="tileType">
+                            <option value="">牌を選択</option>
+                            <optgroup label="萬子">
+                                <option value="1m">一萬</option>
+                                <option value="2m">二萬</option>
+                                <option value="3m">三萬</option>
+                                <option value="4m">四萬</option>
+                                <option value="5m">五萬</option>
+                                <option value="6m">六萬</option>
+                                <option value="7m">七萬</option>
+                                <option value="8m">八萬</option>
+                                <option value="9m">九萬</option>
+                            </optgroup>
+                            <optgroup label="筒子">
+                                <option value="1p">一筒</option>
+                                <option value="2p">二筒</option>
+                                <option value="3p">三筒</option>
+                                <option value="4p">四筒</option>
+                                <option value="5p">五筒</option>
+                                <option value="6p">六筒</option>
+                                <option value="7p">七筒</option>
+                                <option value="8p">八筒</option>
+                                <option value="9p">九筒</option>
+                            </optgroup>
+                            <optgroup label="索子">
+                                <option value="1s">一索</option>
+                                <option value="2s">二索</option>
+                                <option value="3s">三索</option>
+                                <option value="4s">四索</option>
+                                <option value="5s">五索</option>
+                                <option value="6s">六索</option>
+                                <option value="7s">七索</option>
+                                <option value="8s">八索</option>
+                                <option value="9s">九索</option>
+                            </optgroup>
+                            <optgroup label="字牌">
+                                <option value="1z">東</option>
+                                <option value="2z">南</option>
+                                <option value="3z">西</option>
+                                <option value="4z">北</option>
+                                <option value="5z">白</option>
+                                <option value="6z">發</option>
+                                <option value="7z">中</option>
+                            </optgroup>
+                        </select>
+                        <button id="addTile">牌を追加</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="scoring-section">
+                <h2>点数計算</h2>
+                <div id="handAnalysis" class="hand-analysis">
+                    <p>14枚の牌を認識してください</p>
+                </div>
+                <div id="scoreResult" class="score-result">
+                    <div class="score-details">
+                        <div class="han-fu">
+                            <span id="hanCount">-</span>翻 <span id="fuCount">-</span>符
+                        </div>
+                        <div class="points">
+                            <div class="dealer-points">
+                                親: <span id="dealerPoints">-</span>点
+                            </div>
+                            <div class="non-dealer-points">
+                                子: <span id="nonDealerPoints">-</span>点
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="test-section">
+                <h2>テスト用サンプル</h2>
+                <div class="sample-hands">
+                    <button class="sample-hand" data-tiles="1m,1m,1m,2m,3m,4m,5m,6m,7m,8m,9m,9m,9m,9m">国士無双</button>
+                    <button class="sample-hand" data-tiles="1m,2m,3m,4m,5m,6m,7m,8m,9m,1p,1p,1p,2p,2p">一気通貫</button>
+                    <button class="sample-hand" data-tiles="1m,1m,1m,2m,2m,2m,3m,3m,3m,4m,4m,4m,5m,5m">四暗刻</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://docs.opencv.org/4.5.0/opencv.js"></script>
+    <script src="mahjong-recognition.js"></script>
+    <script src="mahjong-scoring.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
