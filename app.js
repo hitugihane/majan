@@ -289,12 +289,20 @@ class MahjongApp {
             canvas.height = this.uploadedImage.naturalHeight;
             ctx.drawImage(this.uploadedImage, 0, 0);
             
+            console.log(`Analyzing image: ${canvas.width}x${canvas.height}`);
+            
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const tiles = await this.recognition.recognizeTiles(imageData, canvas);
             
-            this.processTileRecognition(tiles);
+            if (tiles.length === 0) {
+                console.log('No tiles detected, falling back to simulation');
+                this.simulateRecognition();
+            } else {
+                this.processTileRecognition(tiles);
+            }
         } catch (error) {
             console.error('Error analyzing uploaded photo:', error);
+            console.log('Falling back to simulation due to error');
             this.simulateRecognition();
         }
     }
