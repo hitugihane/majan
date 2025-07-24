@@ -59,8 +59,10 @@ class MahjongRecognition {
                     const rect = cv.boundingRect(contour);
                     const aspectRatio = rect.width / rect.height;
                     
-                    if (aspectRatio > 0.4 && aspectRatio < 2.0 && rect.width > 20 && rect.height > 20) {
-                        console.log(`Found potential tile: area=${area}, aspect=${aspectRatio.toFixed(2)}, size=${rect.width}x${rect.height}`);
+                    console.log(`Contour ${i}: area=${area}, aspect=${aspectRatio.toFixed(2)}, size=${rect.width}x${rect.height}`);
+                    
+                    if (aspectRatio > 0.2 && aspectRatio < 5.0 && rect.width > 10 && rect.height > 10) {
+                        console.log(`✓ Accepted tile candidate: area=${area}, aspect=${aspectRatio.toFixed(2)}, size=${rect.width}x${rect.height}`);
                         
                         const tileImage = this.extractTile(src, rect);
                         const tileType = this.classifyTile(tileImage);
@@ -72,7 +74,11 @@ class MahjongRecognition {
                         });
                         
                         tileImage.delete();
+                    } else {
+                        console.log(`✗ Rejected: aspect=${aspectRatio.toFixed(2)} not in [0.2,5.0] or size ${rect.width}x${rect.height} too small`);
                     }
+                } else {
+                    console.log(`Contour ${i}: area=${area} outside range [${minArea}, ${maxArea}]`);
                 }
                 contour.delete();
             }
