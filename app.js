@@ -1,41 +1,78 @@
 class MahjongApp {
     constructor() {
-        this.recognition = new MahjongRecognition();
         this.scoring = new MahjongScoring();
-        this.currentTiles = [];
-        this.stream = null;
+        this.handType = 'standard';
+        this.currentMeld = [];
+        this.completedMelds = [];
+        this.pair = [];
+        this.completedPairs = [];
+        this.currentPair = [];
+        this.kokushiTiles = [];
+        this.gameConditions = {};
         
         this.initializeElements();
         this.bindEvents();
     }
 
     initializeElements() {
-        this.video = document.getElementById('video');
-        this.canvas = document.getElementById('canvas');
-        this.processCanvas = document.getElementById('processCanvas');
-        this.startCameraBtn = document.getElementById('startCamera');
-        this.captureBtn = document.getElementById('captureImage');
-        this.resetBtn = document.getElementById('resetRecognition');
-        this.recognizedTilesDiv = document.getElementById('recognizedTiles');
-        this.tileTypeSelect = document.getElementById('tileType');
-        this.addTileBtn = document.getElementById('addTile');
+        this.meldTypeSelect = document.getElementById('meldType');
+        this.kantsuTypeSelect = document.getElementById('kantsuType');
+        this.currentMeldDisplay = document.getElementById('currentMeldDisplay');
+        this.currentMeldTiles = document.getElementById('currentMeldTiles');
+        this.completeMeldBtn = document.getElementById('completeMeld');
+        this.clearMeldBtn = document.getElementById('clearMeld');
+        this.completedMeldsDiv = document.getElementById('completedMelds');
+        this.pairSection = document.getElementById('pairSection');
+        this.pairTiles = document.getElementById('pairTiles');
+        this.completePairBtn = document.getElementById('completePair');
+        this.gameConditionsDiv = document.getElementById('gameConditions');
+        this.calculateScoreBtn = document.getElementById('calculateScore');
+        this.resetHandBtn = document.getElementById('resetHand');
         this.handAnalysisDiv = document.getElementById('handAnalysis');
         this.hanCountSpan = document.getElementById('hanCount');
         this.fuCountSpan = document.getElementById('fuCount');
         this.dealerPointsSpan = document.getElementById('dealerPoints');
         this.nonDealerPointsSpan = document.getElementById('nonDealerPoints');
         
-        this.canvas.width = 640;
-        this.canvas.height = 480;
-        this.processCanvas.width = 640;
-        this.processCanvas.height = 480;
+        this.standardHandSection = document.getElementById('standardHandSection');
+        this.chiitoitsuHandSection = document.getElementById('chiitoitsuHandSection');
+        this.kokushiHandSection = document.getElementById('kokushiHandSection');
+        this.completedPairsCountSpan = document.getElementById('completedPairsCount');
+        this.completedPairsListDiv = document.getElementById('completedPairsList');
+        this.currentPairDisplay = document.getElementById('currentPairDisplay');
+        this.currentPairTiles = document.getElementById('currentPairTiles');
+        this.completePairBtnChii = document.getElementById('completePairBtn');
+        this.clearPairBtn = document.getElementById('clearPairBtn');
+        this.kokushiCountSpan = document.getElementById('kokushiCount');
+        this.kokushiTilesDiv = document.getElementById('kokushiTiles');
+        this.clearKokushiBtn = document.getElementById('clearKokushi');
     }
 
     bindEvents() {
-        this.startCameraBtn.addEventListener('click', () => this.startCamera());
-        this.captureBtn.addEventListener('click', () => this.captureAndRecognize());
-        this.resetBtn.addEventListener('click', () => this.resetRecognition());
-        this.addTileBtn.addEventListener('click', () => this.addManualTile());
+        document.querySelectorAll('input[name="handType"]').forEach(radio => {
+            radio.addEventListener('change', (e) => this.onHandTypeChange(e.target.value));
+        });
+        
+        this.meldTypeSelect.addEventListener('change', () => this.onMeldTypeChange());
+        this.completeMeldBtn.addEventListener('click', () => this.completeMeld());
+        this.clearMeldBtn.addEventListener('click', () => this.clearCurrentMeld());
+        this.completePairBtn.addEventListener('click', () => this.completePair());
+        this.calculateScoreBtn.addEventListener('click', () => this.calculateScore());
+        this.resetHandBtn.addEventListener('click', () => this.resetHand());
+        
+        if (this.completePairBtnChii) {
+            this.completePairBtnChii.addEventListener('click', () => this.completeChiitoitsuPair());
+        }
+        if (this.clearPairBtn) {
+            this.clearPairBtn.addEventListener('click', () => this.clearCurrentPair());
+        }
+        if (this.clearKokushiBtn) {
+            this.clearKokushiBtn.addEventListener('click', () => this.clearKokushi());
+        }
+        
+        document.querySelectorAll('.tile.clickable, .tile-requirement.clickable').forEach(tile => {
+            tile.addEventListener('click', (e) => this.onTileClick(e.target.dataset.tile));
+        });
         
         document.querySelectorAll('.sample-hand').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -45,127 +82,230 @@ class MahjongApp {
         });
     }
 
-    async startCamera() {
-        try {
-            this.stream = await navigator.mediaDevices.getUserMedia({
-                video: { 
-                    width: 640, 
-                    height: 480,
-                    facingMode: 'environment'
-                }
-            });
-            
-            this.video.srcObject = this.stream;
-            this.startCameraBtn.disabled = true;
-            this.captureBtn.disabled = false;
-            
-            console.log('Camera started successfully');
-        } catch (error) {
-            console.error('Error accessing camera:', error);
-            alert('カメラにアクセスできませんでした。ブラウザの設定を確認してください。');
-            
-            this.showDemoMode();
+    onMeldTypeChange() {
+        const meldType = this.meldTypeSelect.value;
+        this.kantsuTypeSelect.style.display = meldType === 'kantsu' ? 'inline' : 'none';
+        this.clearCurrentMeld();
+    }
+
+    onHandTypeChange(handType) {
+        this.handType = handType;
+        this.resetHand();
+        this.showHandWorkflow(handType);
+    }
+
+    showHandWorkflow(handType) {
+        this.standardHandSection.style.display = handType === 'standard' ? 'block' : 'none';
+        this.chiitoitsuHandSection.style.display = handType === 'chiitoitsu' ? 'block' : 'none';
+        this.kokushiHandSection.style.display = handType === 'kokushi' ? 'block' : 'none';
+    }
+
+    onTileClick(tileCode) {
+        if (this.handType === 'standard') {
+            if (this.completedMelds.length < 4) {
+                this.addTileToCurrentMeld(tileCode);
+            } else if (this.pair.length < 2) {
+                this.addTileToPair(tileCode);
+            }
+        } else if (this.handType === 'chiitoitsu') {
+            this.addTileToCurrentPair(tileCode);
+        } else if (this.handType === 'kokushi') {
+            this.addTileToKokushi(tileCode);
         }
     }
 
-    showDemoMode() {
-        this.video.style.display = 'none';
-        const demoDiv = document.createElement('div');
-        demoDiv.innerHTML = `
-            <div style="background: #333; color: white; padding: 20px; text-align: center; border-radius: 10px;">
-                <p>カメラが利用できません</p>
-                <p>デモモードでサンプル手牌をお試しください</p>
-                <button id="demoRecognition" style="margin-top: 10px;">サンプル認識テスト</button>
-            </div>
-        `;
-        this.video.parentNode.insertBefore(demoDiv, this.video.nextSibling);
+    addTileToCurrentMeld(tileCode) {
+        const meldType = this.meldTypeSelect.value;
+        const maxTiles = meldType === 'kantsu' ? 4 : 3;
         
-        document.getElementById('demoRecognition').addEventListener('click', () => {
-            this.simulateRecognition();
+        if (this.currentMeld.length < maxTiles) {
+            this.currentMeld.push(tileCode);
+            this.updateCurrentMeldDisplay();
+            this.checkMeldCompletion();
+        }
+    }
+
+    addTileToPair(tileCode) {
+        if (this.pair.length < 2) {
+            this.pair.push(tileCode);
+            this.updatePairDisplay();
+            this.completePairBtn.disabled = this.pair.length !== 2 || this.pair[0] !== this.pair[1];
+        }
+    }
+
+    updateCurrentMeldDisplay() {
+        const meldType = this.meldTypeSelect.value || 'shuntsu';
+        const meldTypeNames = {
+            'shuntsu': '順子',
+            'koutsu': '刻子', 
+            'kantsu': '槓子'
+        };
+        
+        this.currentMeldDisplay.textContent = `${meldTypeNames[meldType] || '順子'} (${this.currentMeld.length}/${meldType === 'kantsu' ? 4 : 3})`;
+        
+        const tilesHtml = this.currentMeld.map(tile => {
+            const tileName = this.scoring.getTileName(tile);
+            return `<div class="tile tile-${tile}">${tileName}</div>`;
+        }).join('');
+        
+        this.currentMeldTiles.innerHTML = tilesHtml;
+    }
+
+    checkMeldCompletion() {
+        const meldType = this.meldTypeSelect.value;
+        const requiredTiles = meldType === 'kantsu' ? 4 : 3;
+        
+        if (this.currentMeld.length === requiredTiles) {
+            const isValid = this.validateMeld(this.currentMeld, meldType);
+            this.completeMeldBtn.disabled = !isValid;
+        } else {
+            this.completeMeldBtn.disabled = true;
+        }
+    }
+
+    validateMeld(tiles, meldType) {
+        if (meldType === 'koutsu' || meldType === 'kantsu') {
+            return tiles.every(tile => tile === tiles[0]);
+        } else if (meldType === 'shuntsu') {
+            const sortedTiles = [...tiles].sort();
+            if (sortedTiles[0][1] !== sortedTiles[1][1] || sortedTiles[1][1] !== sortedTiles[2][1]) {
+                return false;
+            }
+            const nums = sortedTiles.map(tile => parseInt(tile[0])).sort((a, b) => a - b);
+            return nums[1] === nums[0] + 1 && nums[2] === nums[1] + 1;
+        }
+        return false;
+    }
+
+    completeMeld() {
+        const meldType = this.meldTypeSelect.value;
+        const kantsuType = meldType === 'kantsu' ? this.kantsuTypeSelect.value : null;
+        
+        this.completedMelds.push({
+            type: meldType,
+            kantsuType: kantsuType,
+            tiles: [...this.currentMeld]
         });
         
-        this.captureBtn.disabled = false;
-    }
-
-    async captureAndRecognize() {
-        try {
-            if (this.stream) {
-                const ctx = this.canvas.getContext('2d');
-                ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
-                
-                const imageData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-                const tiles = await this.recognition.recognizeTiles(imageData, this.canvas);
-                
-                this.processTileRecognition(tiles);
-            } else {
-                this.simulateRecognition();
-            }
-        } catch (error) {
-            console.error('Error in tile recognition:', error);
-            this.simulateRecognition();
+        this.clearCurrentMeld();
+        this.updateCompletedMeldsDisplay();
+        
+        if (this.completedMelds.length === 4) {
+            this.showPairSelection();
         }
     }
 
-    simulateRecognition() {
-        const tiles = this.recognition.simulateRecognition();
-        this.processTileRecognition(tiles);
+    clearCurrentMeld() {
+        this.currentMeld = [];
+        this.updateCurrentMeldDisplay();
+        this.completeMeldBtn.disabled = true;
     }
 
-    processTileRecognition(tiles) {
-        this.currentTiles = tiles.map(tile => tile.type);
-        this.updateTileDisplay();
-        this.updateScoring();
-    }
-
-    addManualTile() {
-        const selectedTile = this.tileTypeSelect.value;
-        if (selectedTile && this.currentTiles.length < 14) {
-            this.currentTiles.push(selectedTile);
-            this.updateTileDisplay();
-            this.updateScoring();
-            this.tileTypeSelect.value = '';
-        }
-    }
-
-    removeTile(index) {
-        this.currentTiles.splice(index, 1);
-        this.updateTileDisplay();
-        this.updateScoring();
-    }
-
-    resetRecognition() {
-        this.currentTiles = [];
-        this.updateTileDisplay();
-        this.updateScoring();
-    }
-
-    loadSampleHand(tiles) {
-        this.currentTiles = [...tiles];
-        this.updateTileDisplay();
-        this.updateScoring();
-    }
-
-    updateTileDisplay() {
-        if (this.currentTiles.length === 0) {
-            this.recognizedTilesDiv.innerHTML = '<p>まだ牌が認識されていません</p>';
+    updateCompletedMeldsDisplay() {
+        if (this.completedMelds.length === 0) {
+            this.completedMeldsDiv.innerHTML = '<p>まだメンツがありません (4つのメンツが必要)</p>';
             return;
         }
-
-        const tilesHtml = this.currentTiles.map((tile, index) => {
-            const tileName = this.scoring.getTileName(tile);
+        
+        const meldsHtml = this.completedMelds.map((meld, index) => {
+            const meldTypeNames = {
+                'shuntsu': '順子',
+                'koutsu': '刻子',
+                'kantsu': meld.kantsuType === 'ankan' ? '暗槓' : '明槓'
+            };
+            
+            const tilesHtml = meld.tiles.map(tile => {
+                const tileName = this.scoring.getTileName(tile);
+                return `<div class="tile tile-${tile}">${tileName}</div>`;
+            }).join('');
+            
             return `
-                <div class="tile tile-${tile} removable" onclick="app.removeTile(${index})">
-                    ${tileName}
+                <div class="completed-meld">
+                    <h4>${meldTypeNames[meld.type]} ${index + 1}</h4>
+                    <div class="meld-tiles">${tilesHtml}</div>
+                    <button onclick="app.removeMeld(${index})">削除</button>
                 </div>
             `;
         }).join('');
-
-        this.recognizedTilesDiv.innerHTML = tilesHtml;
+        
+        this.completedMeldsDiv.innerHTML = meldsHtml;
     }
 
-    updateScoring() {
-        const analysis = this.scoring.analyzeHand(this.currentTiles);
+    removeMeld(index) {
+        this.completedMelds.splice(index, 1);
+        this.updateCompletedMeldsDisplay();
+        this.hidePairSelection();
+        this.hideGameConditions();
+    }
+
+    showPairSelection() {
+        this.pairSection.style.display = 'block';
+        this.updatePairDisplay();
+    }
+
+    hidePairSelection() {
+        this.pairSection.style.display = 'none';
+        this.pair = [];
+    }
+
+    updatePairDisplay() {
+        const tilesHtml = this.pair.map(tile => {
+            const tileName = this.scoring.getTileName(tile);
+            return `<div class="tile tile-${tile}">${tileName}</div>`;
+        }).join('');
         
+        this.pairTiles.innerHTML = tilesHtml || '<p>2枚の同じ牌を選択してください</p>';
+    }
+
+    completePair() {
+        if (this.pair.length === 2 && this.pair[0] === this.pair[1]) {
+            this.showGameConditions();
+        }
+    }
+
+    showGameConditions() {
+        this.gameConditionsDiv.style.display = 'block';
+    }
+
+    hideGameConditions() {
+        this.gameConditionsDiv.style.display = 'none';
+    }
+
+    calculateScore() {
+        let allTiles = [];
+        
+        if (this.handType === 'standard') {
+            this.completedMelds.forEach(meld => {
+                allTiles.push(...meld.tiles);
+            });
+            allTiles.push(...this.pair);
+        } else if (this.handType === 'chiitoitsu') {
+            this.completedPairs.forEach(pair => {
+                allTiles.push(...pair);
+            });
+        } else if (this.handType === 'kokushi') {
+            allTiles = [...this.kokushiTiles];
+        }
+        
+        const conditions = {
+            riichi: document.getElementById('riichi').checked,
+            doubleRiichi: document.getElementById('doubleRiichi').checked,
+            ippatsu: document.getElementById('ippatsu').checked,
+            tsumo: document.getElementById('tsumo').checked,
+            haitei: document.getElementById('haitei').checked,
+            houtei: document.getElementById('houtei').checked,
+            rinshan: document.getElementById('rinshan').checked,
+            chankan: document.getElementById('chankan').checked,
+            roundWind: document.getElementById('roundWind').value,
+            seatWind: document.getElementById('seatWind').value,
+            melds: this.completedMelds
+        };
+        
+        const analysis = this.scoring.analyzeHand(allTiles, conditions);
+        this.updateScoring(analysis);
+    }
+
+    updateScoring(analysis) {
         this.handAnalysisDiv.innerHTML = `
             <p><strong>状態:</strong> ${analysis.message}</p>
             ${analysis.yaku.length > 0 ? this.formatYakuList(analysis.yaku) : ''}
@@ -191,6 +331,151 @@ class MahjongApp {
                 ${yakuHtml}
             </div>
         `;
+    }
+
+    resetHand() {
+        this.currentMeld = [];
+        this.completedMelds = [];
+        this.pair = [];
+        this.completedPairs = [];
+        this.currentPair = [];
+        this.kokushiTiles = [];
+        
+        this.clearCurrentMeld();
+        this.updateCompletedMeldsDisplay();
+        this.hidePairSelection();
+        this.hideGameConditions();
+        
+        if (this.handType === 'chiitoitsu') {
+            this.updateCompletedPairsDisplay();
+            this.updateCurrentPairDisplay();
+        } else if (this.handType === 'kokushi') {
+            this.updateKokushiDisplay();
+        }
+        
+        document.querySelectorAll('#gameConditions input[type="checkbox"]').forEach(cb => cb.checked = false);
+    }
+
+    loadSampleHand(tiles) {
+        this.resetHand();
+        alert('サンプル手牌機能は手動選択モードでは利用できません。手動でメンツを作成してください。');
+    }
+
+    addTileToCurrentPair(tileCode) {
+        if (this.currentPair.length < 2) {
+            this.currentPair.push(tileCode);
+            this.updateCurrentPairDisplay();
+            this.checkChiitoitsuPairCompletion();
+        }
+    }
+
+    checkChiitoitsuPairCompletion() {
+        if (this.currentPair.length === 2 && this.currentPair[0] === this.currentPair[1]) {
+            this.completePairBtnChii.disabled = false;
+        } else {
+            this.completePairBtnChii.disabled = true;
+        }
+    }
+
+    completeChiitoitsuPair() {
+        if (this.currentPair.length === 2 && this.currentPair[0] === this.currentPair[1]) {
+            this.completedPairs.push([...this.currentPair]);
+            this.currentPair = [];
+            this.updateCompletedPairsDisplay();
+            this.updateCurrentPairDisplay();
+            
+            if (this.completedPairs.length === 7) {
+                this.showGameConditions();
+            }
+        }
+    }
+
+    clearCurrentPair() {
+        this.currentPair = [];
+        this.updateCurrentPairDisplay();
+        this.completePairBtnChii.disabled = true;
+    }
+
+    updateCurrentPairDisplay() {
+        if (!this.currentPairDisplay || !this.currentPairTiles) return;
+        
+        this.currentPairDisplay.textContent = `対子 (${this.currentPair.length}/2)`;
+        
+        const tilesHtml = this.currentPair.map(tile => {
+            const tileName = this.scoring.getTileName(tile);
+            return `<div class="tile tile-${tile}">${tileName}</div>`;
+        }).join('');
+        
+        this.currentPairTiles.innerHTML = tilesHtml;
+    }
+
+    updateCompletedPairsDisplay() {
+        if (!this.completedPairsCountSpan || !this.completedPairsListDiv) return;
+        
+        this.completedPairsCountSpan.textContent = this.completedPairs.length;
+        
+        const pairsHtml = this.completedPairs.map((pair, index) => {
+            const tilesHtml = pair.map(tile => {
+                const tileName = this.scoring.getTileName(tile);
+                return `<div class="tile tile-${tile}">${tileName}</div>`;
+            }).join('');
+            
+            return `
+                <div class="completed-pair">
+                    ${tilesHtml}
+                    <button onclick="app.removeChiitoitsuPair(${index})">削除</button>
+                </div>
+            `;
+        }).join('');
+        
+        this.completedPairsListDiv.innerHTML = pairsHtml;
+    }
+
+    removeChiitoitsuPair(index) {
+        this.completedPairs.splice(index, 1);
+        this.updateCompletedPairsDisplay();
+        this.hideGameConditions();
+    }
+
+    addTileToKokushi(tileCode) {
+        const requiredTiles = ['1m','9m','1p','9p','1s','9s','1z','2z','3z','4z','5z','6z','7z'];
+        if (!requiredTiles.includes(tileCode)) return;
+        
+        const existingCount = this.kokushiTiles.filter(t => t === tileCode).length;
+        if (existingCount < 2) {
+            this.kokushiTiles.push(tileCode);
+            this.updateKokushiDisplay();
+            
+            if (this.kokushiTiles.length === 14) {
+                this.showGameConditions();
+            }
+        }
+    }
+
+    updateKokushiDisplay() {
+        if (!this.kokushiCountSpan || !this.kokushiTilesDiv) return;
+        
+        this.kokushiCountSpan.textContent = this.kokushiTiles.length;
+        
+        const tilesHtml = this.kokushiTiles.map(tile => {
+            const tileName = this.scoring.getTileName(tile);
+            return `<div class="tile tile-${tile}">${tileName}</div>`;
+        }).join('');
+        
+        this.kokushiTilesDiv.innerHTML = tilesHtml;
+        
+        document.querySelectorAll('.tile-requirement').forEach(req => {
+            const tileCode = req.dataset.tile;
+            const count = this.kokushiTiles.filter(t => t === tileCode).length;
+            req.classList.toggle('selected', count > 0);
+            req.classList.toggle('completed', count === 2);
+        });
+    }
+
+    clearKokushi() {
+        this.kokushiTiles = [];
+        this.updateKokushiDisplay();
+        this.hideGameConditions();
     }
 }
 

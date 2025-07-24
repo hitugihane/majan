@@ -25,46 +25,60 @@ class MahjongRecognition {
             const gray = new cv.Mat();
             const blurred = new cv.Mat();
             const thresh = new cv.Mat();
+            const edges = new cv.Mat();
+            const morphed = new cv.Mat();
             
             cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-            cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
-            cv.adaptiveThreshold(blurred, thresh, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2);
+            cv.GaussianBlur(gray, blurred, new cv.Size(3, 3), 0);
+            
+            cv.adaptiveThreshold(blurred, thresh, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 15, 5);
+            
+            cv.Canny(blurred, edges, 50, 150);
+            
+            const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3, 3));
+            cv.morphologyEx(thresh, morphed, cv.MORPH_CLOSE, kernel);
+            
+            cv.bitwise_or(morphed, edges, thresh);
 
             const contours = new cv.MatVector();
             const hierarchy = new cv.Mat();
             cv.findContours(thresh, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
             const tiles = [];
-            const minArea = 800;
-            const maxArea = 10000;
+            const imageArea = src.rows * src.cols;
+            const minArea = Math.max(200, imageArea * 0.0005); // Lower minimum for smaller tiles
+            const maxArea = Math.min(100000, imageArea * 0.3); // Higher maximum to allow larger contours
+            
+            console.log(`Processing ${contours.size()} contours, area range: ${minArea}-${maxArea}`);
 
             for (let i = 0; i < contours.size(); i++) {
                 const contour = contours.get(i);
                 const area = cv.contourArea(contour);
                 
                 if (area > minArea && area < maxArea) {
-                    const approx = new cv.Mat();
-                    const epsilon = 0.02 * cv.arcLength(contour, true);
-                    cv.approxPolyDP(contour, approx, epsilon, true);
+                    const rect = cv.boundingRect(contour);
+                    const aspectRatio = rect.width / rect.height;
                     
-                    if (approx.rows === 4) {
-                        const rect = cv.boundingRect(contour);
-                        const aspectRatio = rect.width / rect.height;
+                    console.log(`Contour ${i}: area=${area}, aspect=${aspectRatio.toFixed(2)}, size=${rect.width}x${rect.height}`);
+                    
+                    if (aspectRatio > 0.2 && aspectRatio < 5.0 && rect.width > 10 && rect.height > 10) {
+                        console.log(`✓ Accepted tile candidate: area=${area}, aspect=${aspectRatio.toFixed(2)}, size=${rect.width}x${rect.height}`);
                         
-                        if (aspectRatio > 0.6 && aspectRatio < 1.4) {
-                            const tileImage = this.extractTile(src, contour);
-                            const tileType = this.classifyTile(tileImage);
-                            
-                            tiles.push({
-                                type: tileType,
-                                confidence: 0.8,
-                                bounds: rect
-                            });
-                            
-                            tileImage.delete();
-                        }
+                        const tileImage = this.extractTile(src, rect);
+                        const tileType = this.classifyTile(tileImage);
+                        
+                        tiles.push({
+                            type: tileType,
+                            confidence: 0.7,
+                            bounds: rect
+                        });
+                        
+                        tileImage.delete();
+                    } else {
+                        console.log(`✗ Rejected: aspect=${aspectRatio.toFixed(2)} not in [0.2,5.0] or size ${rect.width}x${rect.height} too small`);
                     }
-                    approx.delete();
+                } else {
+                    console.log(`Contour ${i}: area=${area} outside range [${minArea}, ${maxArea}]`);
                 }
                 contour.delete();
             }
@@ -73,9 +87,13 @@ class MahjongRecognition {
             gray.delete();
             blurred.delete();
             thresh.delete();
+            edges.delete();
+            morphed.delete();
+            kernel.delete();
             contours.delete();
             hierarchy.delete();
 
+            console.log(`Recognized ${tiles.length} tiles`);
             return tiles;
         } catch (error) {
             console.error('Error in tile recognition:', error);
@@ -83,39 +101,93 @@ class MahjongRecognition {
         }
     }
 
-    extractTile(src, contour) {
-        const rect = cv.boundingRect(contour);
-        const roi = src.roi(rect);
-        const resized = new cv.Mat();
-        cv.resize(roi, resized, new cv.Size(60, 80));
-        roi.delete();
-        return resized;
+    extractTile(src, rect) {
+        try {
+            const x = Math.max(0, rect.x);
+            const y = Math.max(0, rect.y);
+            const width = Math.min(rect.width, src.cols - x);
+            const height = Math.min(rect.height, src.rows - y);
+            
+            const adjustedRect = new cv.Rect(x, y, width, height);
+            const roi = src.roi(adjustedRect);
+            const resized = new cv.Mat();
+            const gray = new cv.Mat();
+            
+            if (roi.channels() > 1) {
+                cv.cvtColor(roi, gray, cv.COLOR_RGBA2GRAY);
+            } else {
+                roi.copyTo(gray);
+            }
+            
+            cv.resize(gray, resized, new cv.Size(60, 80));
+            
+            roi.delete();
+            gray.delete();
+            return resized;
+        } catch (error) {
+            console.error('Error extracting tile:', error);
+            const blank = new cv.Mat(80, 60, cv.CV_8UC1, new cv.Scalar(255));
+            return blank;
+        }
     }
 
     classifyTile(tileImage) {
-        const templates = this.getTileTemplates();
-        let bestMatch = '1m';
-        let bestScore = 0;
+        try {
+            const templates = this.getTileTemplates();
+            let bestMatch = '1m';
+            let bestScore = 0;
+            const scores = {};
 
-        for (const [tileType, template] of Object.entries(templates)) {
-            const score = this.compareImages(tileImage, template);
-            if (score > bestScore) {
-                bestScore = score;
-                bestMatch = tileType;
+            for (const [tileType, template] of Object.entries(templates)) {
+                const score = this.compareImages(tileImage, template);
+                scores[tileType] = score;
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMatch = tileType;
+                }
             }
-        }
 
-        return bestMatch;
+            console.log(`Best match: ${bestMatch} (score: ${bestScore.toFixed(3)})`);
+            
+            if (bestScore < 0.3) {
+                const patternMatch = this.classifyByPattern(tileImage);
+                if (patternMatch) {
+                    console.log(`Pattern-based match: ${patternMatch}`);
+                    return patternMatch;
+                }
+            }
+
+            return bestMatch;
+        } catch (error) {
+            console.error('Error classifying tile:', error);
+            return '1m'; // Default fallback
+        }
     }
 
     compareImages(img1, img2) {
         try {
+            if (img1.rows !== img2.rows || img1.cols !== img2.cols) {
+                const resized = new cv.Mat();
+                cv.resize(img2, resized, new cv.Size(img1.cols, img1.rows));
+                const result = this.compareImages(img1, resized);
+                resized.delete();
+                return result;
+            }
+
+            const result = new cv.Mat();
+            cv.matchTemplate(img1, img2, result, cv.TM_CCOEFF_NORMED);
+            const minMax = cv.minMaxLoc(result);
+            result.delete();
+            
             const diff = new cv.Mat();
             cv.absdiff(img1, img2, diff);
             const mean = cv.mean(diff);
+            const similarity = 1.0 - (mean[0] / 255.0);
             diff.delete();
-            return 1.0 - (mean[0] / 255.0);
+            
+            return Math.max(minMax.maxVal, similarity);
         } catch (error) {
+            console.error('Error comparing images:', error);
             return 0;
         }
     }
@@ -179,6 +251,34 @@ class MahjongRecognition {
         cv.cvtColor(mat, gray, cv.COLOR_RGBA2GRAY);
         mat.delete();
         return gray;
+    }
+
+    classifyByPattern(tileImage) {
+        try {
+            const mean = cv.mean(tileImage);
+            const brightness = mean[0];
+            
+            const edges = new cv.Mat();
+            cv.Canny(tileImage, edges, 50, 150);
+            const edgeMean = cv.mean(edges);
+            const edgeDensity = edgeMean[0] / 255.0;
+            edges.delete();
+            
+            if (brightness > 200) {
+                return '5z'; // White dragon (bright)
+            } else if (brightness < 100 && edgeDensity > 0.3) {
+                return '7z'; // Red dragon (dark with edges)
+            } else if (edgeDensity > 0.4) {
+                return Math.random() > 0.5 ? '1m' : '1s';
+            } else if (edgeDensity > 0.2) {
+                return '1p';
+            }
+            
+            return null; // No pattern match
+        } catch (error) {
+            console.error('Error in pattern classification:', error);
+            return null;
+        }
     }
 
     simulateRecognition() {

@@ -51,11 +51,11 @@ class MahjongScoring {
         };
     }
 
-    analyzeHand(tiles) {
-        if (tiles.length !== 14) {
+    analyzeHand(tiles, conditions = {}) {
+        if (tiles.length < 14 || tiles.length > 17) {
             return {
                 isComplete: false,
-                message: `${tiles.length}枚の牌があります。14枚必要です。`,
+                message: `${tiles.length}枚の牌があります。14-17枚必要です。`,
                 yaku: [],
                 han: 0,
                 fu: 0,
