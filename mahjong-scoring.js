@@ -428,7 +428,60 @@ class MahjongScoring {
                 }
             });
         } else {
-            const triplets = groups.melds.filter(meld => meld.type === 'triplet');
-            triplets.forEach(triplet => {
-                const tile = triplet.tile;
-                if (['1m', '9m', '1p', '9p', '1s', '9s'].includes(tile) || tile
+            // conditions.meldsがない場合の簡易計算
+            if (groups.type === 'normal') {
+                groups.melds.forEach(meld => {
+                    if (meld.type === 'triplet') {
+                        const tile = meld.tile;
+                        let points = (['1m', '9m', '1p', '9p', '1s', '9s'].includes(tile) || tile.includes('z')) ? 4 : 2;
+                        fu += points;
+                    }
+                });
+            }
+        }
+
+        // 切り上げ
+        fu = Math.ceil(fu / 10) * 10;
+        return fu;
+    }
+
+    calculatePoints(han, fu) {
+        if (han === 0) return { dealer: 0, nonDealer: 0 };
+
+        let basePoints = fu * Math.pow(2, 2 + han);
+
+        if (han >= 13) { // 役満
+            basePoints = 8000;
+        } else if (han >= 11) { // 三倍満
+            basePoints = 6000;
+        } else if (han >= 8) { // 満貫
+            basePoints = 4000;
+        } else if (han >= 6) { // 倍満
+            basePoints = 3000;
+        } else if (han >= 5 || (han >= 4 && fu >= 40) || (han >= 3 && fu >= 70)) { // 満貫条件
+            basePoints = 2000;
+        }
+
+        return {
+            dealer: basePoints * 6,
+            nonDealer: basePoints * 4
+        };
+    }
+
+    formatHandDescription(groups) {
+        if (groups.type === 'kokushi') return '国士無双';
+        if (groups.type === 'chiitoitsu') return '七対子';
+
+        const pairName = this.tileNames[groups.pair] || groups.pair;
+        const meldNames = groups.melds.map(meld => {
+            if (meld.type === 'triplet') {
+                return `刻子(${this.tileNames[meld.tile] || meld.tile})`;
+            } else if (meld.type === 'sequence') {
+                return `順子(${meld.tiles.map(t => this.tileNames[t] || t).join(',')})`;
+            }
+            return '';
+        }).join('、');
+
+        return `面子構成: 対子(${pairName})、${meldNames}`;
+    }
+}
