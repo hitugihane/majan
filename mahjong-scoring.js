@@ -11,16 +11,8 @@ class MahjongScoring {
             '5z': '白', '6z': '發', '7z': '中'
         };
 
-        // 役一覧。リーチも含む。
         this.yakuList = {
             'riichi': { name: 'リーチ', han: 1 },
-            'doubleRiichi': { name: 'ダブルリーチ', han: 2 },
-            'ippatsu': { name: '一発', han: 1 },
-            'tsumo': { name: 'ツモ', han: 1 },
-            'haitei': { name: '海底撈月', han: 1 },
-            'houtei': { name: '河底撈魚', han: 1 },
-            'rinshan': { name: '嶺上開花', han: 1 },
-            'chankan': { name: '槍槓', han: 1 },
             'tanyao': { name: 'タンヤオ', han: 1 },
             'pinfu': { name: 'ピンフ', han: 1 },
             'iipeikou': { name: 'イーペーコー', han: 1 },
@@ -59,7 +51,6 @@ class MahjongScoring {
         };
     }
 
-    // 手牌解析メイン関数。conditionsにリーチなどの条件を含めて渡す
     analyzeHand(tiles, conditions = {}) {
         if (tiles.length < 14 || tiles.length > 17) {
             return {
@@ -89,8 +80,7 @@ class MahjongScoring {
         }
 
         const bestGroup = groups[0];
-
-        const yaku = this.detectYaku(tiles, bestGroup, conditions);
+        const yaku = this.detectYaku(tiles, bestGroup);
         const han = yaku.reduce((sum, y) => sum + y.han, 0);
         const fu = this.calculateFu(bestGroup, conditions);
         const points = this.calculatePoints(han, fu);
@@ -242,22 +232,17 @@ class MahjongScoring {
         return [num + suit, (num + 1) + suit, (num + 2) + suit];
     }
 
-    detectYaku(tiles, groups, conditions = {}) {
+    detectYaku(tiles, groups) {
         const yaku = [];
-
+        
         if (groups.type === 'kokushi') {
             yaku.push(this.yakuList.kokushi);
             return yaku;
         }
-
+        
         if (groups.type === 'chiitoitsu') {
             yaku.push(this.yakuList.chiitoitsu);
             return yaku;
-        }
-
-        // ここでリーチ判定を追加
-        if (conditions.isRiichi) {
-            yaku.push(this.yakuList.riichi);
         }
 
         if (this.isTanyao(tiles)) {
@@ -290,38 +275,6 @@ class MahjongScoring {
 
         const yakuhaiYaku = this.detectYakuhai(groups);
         yaku.push(...yakuhaiYaku);
-
-        if (conditions.riichi) {
-            yaku.push(this.yakuList.riichi);
-        }
-        
-        if (conditions.doubleRiichi) {
-            yaku.push(this.yakuList.doubleRiichi);
-        }
-        
-        if (conditions.ippatsu && conditions.riichi) {
-            yaku.push(this.yakuList.ippatsu);
-        }
-        
-        if (conditions.tsumo) {
-            yaku.push(this.yakuList.tsumo);
-        }
-        
-        if (conditions.haitei) {
-            yaku.push(this.yakuList.haitei);
-        }
-        
-        if (conditions.houtei) {
-            yaku.push(this.yakuList.houtei);
-        }
-        
-        if (conditions.rinshan) {
-            yaku.push(this.yakuList.rinshan);
-        }
-        
-        if (conditions.chankan) {
-            yaku.push(this.yakuList.chankan);
-        }
 
         if (yaku.length === 0) {
             yaku.push({ name: 'ノー役', han: 0 });
@@ -463,60 +416,81 @@ class MahjongScoring {
                 }
             });
         } else {
-            // conditions.meldsがない場合の簡易計算
-            if (groups.type === 'normal') {
-                groups.melds.forEach(meld => {
-                    if (meld.type === 'triplet') {
-                        const tile = meld.tile;
-                        let points = (['1m', '9m', '1p', '9p', '1s', '9s'].includes(tile) || tile.includes('z')) ? 4 : 2;
-                        fu += points;
-                    }
-                });
-            }
+            const triplets = groups.melds.filter(meld => meld.type === 'triplet');
+            triplets.forEach(triplet => {
+                const tile = triplet.tile;
+                if (['1m', '9m', '1p', '9p', '1s', '9s'].includes(tile) || tile.includes('z')) {
+                    fu += 8;
+                } else {
+                    fu += 4;
+                }
+            });
         }
-
-        // 切り上げ
-        fu = Math.ceil(fu / 10) * 10;
-        return fu;
+        
+        const honorTiles = ['1z', '2z', '3z', '4z', '5z', '6z', '7z'];
+        if (honorTiles.includes(groups.pair)) {
+            fu += 2;
+        }
+        
+        fu += 10;
+        
+        return Math.ceil(fu / 10) * 10;
     }
 
     calculatePoints(han, fu) {
-        if (han === 0) return { dealer: 0, nonDealer: 0 };
-
-        let basePoints = fu * Math.pow(2, 2 + han);
-
-        if (han >= 13) { // 役満
-            basePoints = 8000;
-        } else if (han >= 11) { // 三倍満
-            basePoints = 6000;
-        } else if (han >= 8) { // 満貫
-            basePoints = 4000;
-        } else if (han >= 6) { // 倍満
-            basePoints = 3000;
-        } else if (han >= 5 || (han >= 4 && fu >= 40) || (han >= 3 && fu >= 70)) { // 満貫条件
-            basePoints = 2000;
+        if (han === 0) {
+            return { dealer: 0, nonDealer: 0 };
         }
-
+        
+        let basePoints;
+        
+        if (han >= 13) {
+            basePoints = 8000;
+        } else if (han >= 11) {
+            basePoints = 6000;
+        } else if (han >= 8) {
+            basePoints = 4000;
+        } else if (han >= 6) {
+            basePoints = 3000;
+        } else if (han === 5) {
+            basePoints = 2000;
+        } else {
+            basePoints = fu * Math.pow(2, han + 2);
+            if (basePoints > 2000) basePoints = 2000;
+        }
+        
+        const dealerPoints = Math.ceil(basePoints * 6 / 100) * 100;
+        const nonDealerPoints = Math.ceil(basePoints * 4 / 100) * 100;
+        
         return {
-            dealer: basePoints * 6,
-            nonDealer: basePoints * 4
+            dealer: dealerPoints,
+            nonDealer: nonDealerPoints
         };
     }
 
     formatHandDescription(groups) {
-        if (groups.type === 'kokushi') return '国士無双';
-        if (groups.type === 'chiitoitsu') return '七対子';
-
-        const pairName = this.tileNames[groups.pair] || groups.pair;
-        const meldNames = groups.melds.map(meld => {
+        if (groups.type === 'kokushi') {
+            return '国士無双';
+        }
+        
+        if (groups.type === 'chiitoitsu') {
+            return '七対子';
+        }
+        
+        let description = `雀頭: ${this.tileNames[groups.pair]}`;
+        
+        groups.melds.forEach((meld, index) => {
             if (meld.type === 'triplet') {
-                return `刻子(${this.tileNames[meld.tile] || meld.tile})`;
-            } else if (meld.type === 'sequence') {
-                return `順子(${meld.tiles.map(t => this.tileNames[t] || t).join(',')})`;
+                description += ` | 刻子${index + 1}: ${this.tileNames[meld.tile]}`;
+            } else {
+                description += ` | 順子${index + 1}: ${meld.tiles.map(t => this.tileNames[t]).join('')}`;
             }
-            return '';
-        }).join('、');
+        });
+        
+        return description;
+    }
 
-        return `面子構成: 対子(${pairName})、${meldNames}`;
+    getTileName(tile) {
+        return this.tileNames[tile] || tile;
     }
 }
