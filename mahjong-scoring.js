@@ -20,11 +20,19 @@ class MahjongScoring {
             // value yaku like honitsu or chinitsu. Note that riichi and
             // double riichi are present here so they can be referenced
             // programmatically when the appropriate conditions are set.
+            // Situational yaku such as ippatsu, haitei and menzen tsumo are
+            // also included so they can be applied from analyzeHand.
             this.yakuList = {
-                'riichi':      { name: 'リーチ',        han: 1 },
-                'doubleRiichi':{ name: 'ダブルリーチ',    han: 2 },
-                'tanyao':      { name: 'タンヤオ',      han: 1 },
-                'pinfu':       { name: 'ピンフ',        han: 1 },
+                'riichi':        { name: 'リーチ',          han: 1 },
+                'doubleRiichi':  { name: 'ダブルリーチ',      han: 2 },
+                'ippatsu':       { name: '一発',            han: 1 },
+                'menzentsumo':   { name: '門前清自摸和',      han: 1 },
+                'haitei':        { name: '海底撈月',         han: 1 },
+                'houtei':        { name: '河底撈魚',         han: 1 },
+                'rinshan':       { name: '嶺上開花',         han: 1 },
+                'chankan':       { name: '槍槓',            han: 1 },
+                'tanyao':        { name: 'タンヤオ',        han: 1 },
+                'pinfu':         { name: 'ピンフ',          han: 1 },
                 'iipeikou':    { name: 'イーペーコー',  han: 1 },
                 'yakuhai_haku':{ name: '役牌 白',       han: 1 },
                 'yakuhai_hatsu':{ name: '役牌 發',      han: 1 },
@@ -105,21 +113,42 @@ class MahjongScoring {
             // Start with intrinsic yaku detected from the hand structure. This
             // excludes any situational yaku such as riichi which are driven by
             // player declaration rather than tile composition.
-            let yaku = this.detectYaku(tiles, bestGroup);
+            let yaku = this.detectYaku(tiles, bestGroup, conditions);
 
             // Apply riichi/double riichi yaku based on the provided conditions.
             // Double riichi overrides single riichi if both checkboxes are on.
             if (conditions.doubleRiichi) {
-                // Use the defined yaku object if present; otherwise fall back
-                // to an inline definition to avoid crashes if yakuList is
-                // extended in future.
-                if (this.yakuList.doubleRiichi) {
-                    yaku.push(this.yakuList.doubleRiichi);
-                } else {
-                    yaku.push({ name: 'ダブルリーチ', han: 2 });
-                }
+                yaku.push(this.yakuList.doubleRiichi);
             } else if (conditions.riichi) {
                 yaku.push(this.yakuList.riichi);
+            }
+
+            // Ippatsu can only be scored together with riichi or double riichi.
+            if (conditions.ippatsu && (conditions.riichi || conditions.doubleRiichi)) {
+                yaku.push(this.yakuList.ippatsu);
+            }
+
+            // Menzen tsumo: closed hand won by self-draw. Excluded when riichi is
+            // present because riichi already requires a closed hand, making menzen
+            // tsumo redundant.
+            const hasOpenMelds = conditions.melds &&
+                conditions.melds.some(m => m.source === 'pon' || m.source === 'chi');
+            if (conditions.tsumo && !hasOpenMelds && !conditions.riichi && !conditions.doubleRiichi) {
+                yaku.push(this.yakuList.menzentsumo);
+            }
+
+            // Situational one-han bonuses.
+            if (conditions.haitei && conditions.tsumo) {
+                yaku.push(this.yakuList.haitei);
+            }
+            if (conditions.houtei && !conditions.tsumo) {
+                yaku.push(this.yakuList.houtei);
+            }
+            if (conditions.rinshan) {
+                yaku.push(this.yakuList.rinshan);
+            }
+            if (conditions.chankan) {
+                yaku.push(this.yakuList.chankan);
             }
 
             // Remove the placeholder 'ノー役' entry if any additional yaku
@@ -309,9 +338,10 @@ class MahjongScoring {
          *
          * @param {string[]} tiles All tiles in the hand.
          * @param {Object} groups The best group decomposition (pair + melds).
+         * @param {Object} conditions Game conditions containing wind and meld info.
          * @returns {Object[]} A list of yaku objects applicable to this hand.
          */
-        detectYaku(tiles, groups) {
+        detectYaku(tiles, groups, conditions = {}) {
             const yaku = [];
 
             if (groups.type === 'kokushi') {
@@ -352,7 +382,7 @@ class MahjongScoring {
                 yaku.push(this.yakuList.chinitsu);
             }
 
-            const yakuhaiYaku = this.detectYakuhai(groups);
+            const yakuhaiYaku = this.detectYakuhai(groups, conditions);
             yaku.push(...yakuhaiYaku);
 
             if (yaku.length === 0) {
@@ -455,24 +485,38 @@ class MahjongScoring {
             return false;
         }
 
-        // Detect yakuhai: triplets of dragons or round/seat wind. Melds must
-        // contain a triplet of a dragon or a wind to score as yakuhai.
-        detectYakuhai(groups) {
+        // Detect yakuhai: triplets of dragons or the round/seat wind. Dragons
+        // always score; wind triplets only score when the tile matches the
+        // current round wind (場風) or the player's seat wind (自風).
+        detectYakuhai(groups, conditions = {}) {
             const yaku = [];
 
             if (groups.type !== 'normal') return yaku;
+
+            const roundWind = conditions.roundWind || null;
+            const seatWind  = conditions.seatWind  || null;
 
             const triplets = groups.melds.filter(meld => meld.type === 'triplet');
 
             triplets.forEach(triplet => {
                 switch (triplet.tile) {
-                    case '5z': yaku.push(this.yakuList.yakuhai_haku); break;
+                    // Dragons always score as yakuhai.
+                    case '5z': yaku.push(this.yakuList.yakuhai_haku);  break;
                     case '6z': yaku.push(this.yakuList.yakuhai_hatsu); break;
-                    case '7z': yaku.push(this.yakuList.yakuhai_chun); break;
-                    case '1z': yaku.push(this.yakuList.yakuhai_ton); break;
-                    case '2z': yaku.push(this.yakuList.yakuhai_nan); break;
-                    case '3z': yaku.push(this.yakuList.yakuhai_sha); break;
-                    case '4z': yaku.push(this.yakuList.yakuhai_pei); break;
+                    case '7z': yaku.push(this.yakuList.yakuhai_chun);  break;
+                    // Winds only score when they match the round or seat wind.
+                    case '1z':
+                        if (roundWind === '1z' || seatWind === '1z') yaku.push(this.yakuList.yakuhai_ton);
+                        break;
+                    case '2z':
+                        if (roundWind === '2z' || seatWind === '2z') yaku.push(this.yakuList.yakuhai_nan);
+                        break;
+                    case '3z':
+                        if (roundWind === '3z' || seatWind === '3z') yaku.push(this.yakuList.yakuhai_sha);
+                        break;
+                    case '4z':
+                        if (roundWind === '4z' || seatWind === '4z') yaku.push(this.yakuList.yakuhai_pei);
+                        break;
                 }
             });
 
@@ -529,6 +573,13 @@ class MahjongScoring {
 
             const honorTiles = ['1z', '2z', '3z', '4z', '5z', '6z', '7z'];
             if (honorTiles.includes(groups.pair)) {
+                fu += 2;
+            }
+
+            // Tsumo win adds 2 fu (except pinfu, which is handled separately by
+            // the scoring rules and receives 20 fu flat for a tsumo win).
+            const isPinfu = this.isPinfu(groups);
+            if (conditions && conditions.tsumo && !isPinfu) {
                 fu += 2;
             }
 
